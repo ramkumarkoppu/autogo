@@ -1,0 +1,48 @@
+[project]
+name = "alpha-go"
+version = "0.1.0"
+description = "AlphaGo research codebase"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24",
+    "rich>=13.0",
+    "pytest>=9.0.2",
+    "torch>=2.0",
+    "pytest",
+    "pytest-asyncio",
+    "pytest-cov",
+    "mypy",
+    "ruff",
+    "pandas",
+    "fvcore",
+    "ipykernel>=7.1.0",
+    "pyyaml>=6.0",
+    "scipy>=1.15.3",
+    "mup>=1.0.0",
+    "tyro>=1.0.3",
+    "grpcio>=1.60.0",
+    "grpcio-tools>=1.60.0",
+    "scikit-learn>=1.7.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/alpha_go", "infra"]
+
+[tool.mypy]
+strict = true
+python_version = "3.10"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"

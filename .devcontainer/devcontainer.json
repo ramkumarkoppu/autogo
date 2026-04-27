@@ -1,0 +1,25 @@
+{
+  "name": "LearnAlphaGo",
+  "image": "learnalphago-dev",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "runArgs": ["--shm-size=8g", "-p", "8090:8090", "-p", "80:80", "-p", "443:443", "--gpus", "all"],
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind",
+  "workspaceFolder": "/workspace",
+  "postCreateCommand": "uv sync && ./scripts/build_cpp.sh",
+  "postStartCommand": "sudo chmod 666 /var/run/docker.sock 2>/dev/null; cp -r /home/dev/.docker-host/. /home/dev/.docker/ 2>/dev/null; docker buildx create --name container-builder --driver docker-container --use 2>/dev/null || docker buildx use container-builder 2>/dev/null; true",
+  "remoteUser": "dev",
+  "forwardPorts": [8265, 8090, 80, 443],
+  "mounts": [
+    "source=${localEnv:HOME}/.ssh,target=/home/dev/.ssh,type=bind",
+    "source=${localEnv:HOME}/.claude,target=/home/dev/.claude,type=bind",
+    "source=${localEnv:HOME}/.claude.json,target=/home/dev/.claude.json,type=bind",
+    "source=${localEnv:HOME}/.docker,target=/home/dev/.docker-host,type=bind,readonly",
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind",
+    "source=uv-cache,target=/home/dev/.cache/uv,type=volume",
+    "source=${localEnv:HOME}/.bash_history,target=/home/dev/.bash_history,type=bind",
+    "source=/data,target=/data,type=bind"
+  ]
+}

@@ -1,0 +1,14 @@
+ARG BASE_IMAGE=learnalphago-dev
+FROM ${BASE_IMAGE} AS base
+
+# 1. Python deps (only re-runs when lockfile changes)
+COPY --chown=dev:dev pyproject.toml uv.lock ./
+RUN uv sync --frozen
+
+# 2. C++ extension (only re-runs when cpp source changes)
+COPY --chown=dev:dev src/alpha_go/cpp/ src/alpha_go/cpp/
+COPY --chown=dev:dev scripts/build_cpp.sh scripts/build_cpp.sh
+RUN ./scripts/build_cpp.sh
+
+# 3. Everything else (cheap, just copies Python source)
+COPY --chown=dev:dev . .

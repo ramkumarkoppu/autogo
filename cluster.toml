@@ -1,0 +1,5 @@
+# Node configuration for SSH-dispatched docker-run jobs.
+# Workers must have docker + the image pulled (see `infra/cluster.py add`).
+image = "ghcr.io/ericjang/alphago-worker:latest"
+
+# TODO: use `uv run infra/cluster.py add <user>@<ip>` to add machines to the compute cluster. Do not edit cluster.toml directly
