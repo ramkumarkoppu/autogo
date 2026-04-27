@@ -131,7 +131,6 @@ cd AutoGo
    - Initialize git submodules
    - Install Python dependencies via `uv sync`
    - Build the C++ pybind11 extension
-   - Build KataGo
 
 4. Verify the setup:
 ```bash
