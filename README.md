@@ -1,21 +1,15 @@
 # AutoGo
 
-A research codebase for building a strong Go-playing AI from scratch — and, more importantly, for studying how to automate the AI researcher driving the project. AutoGo is less about mastering Go than about exercising an autonomous-research workflow on a domain where data is cheap and signal is fast.
+A minimal codebase for building a strong Go-playing AI from scratch — and, more importantly, for studying how to automate the AI researcher driving the project. AutoGo is less about mastering Go than about exercising an autonomous-research workflow on a domain where data is cheap and signal is fast.
 
-## Examples
-
-Here are some of the things you can do with this:
-
-- `autoresearch` skill: hyperparameter tuning and optimization, autonomously optimize a metric.
-
-- `experiment` skill for one-off experiments. Use this to generate reports and analysis.
+Currently, the best model I have trained has a win rate of 77% against the latest stable Katago release `kata1-zhizi-b40c768nbt-fdx6c`. Play the AutoGo AI at [https://autogo.evjang.com](https://autogo.evjang.com)
 
 
 ## Why Go?
 
 AlphaGo and MCTS are so 2016. Why build a research codebase around Go, as opposed to more recent models like reasoning LLMs, VLMs, Diffusion, etc?
 
-This repo is not really about Go. It is about automating the Go researcher. From Dario Amodei's [Machines of Loving Grace](https://darioamodei.com/essay/machines-of-loving-grace): 
+This repo is not really about Go. It is about automating the Go researcher. The same skillsets should transfer to many other AI research domains. From Dario Amodei's [Machines of Loving Grace](https://darioamodei.com/essay/machines-of-loving-grace): 
 
 *If our core hypothesis about AI progress is correct, then the right way to think of AI is not as a method of data analysis, but as a virtual biologist who performs all the tasks biologists do, including designing and running experiments in the real world (by controlling lab robots or simply telling humans which experiments to run – as a Principal Investigator would to their graduate students), inventing new biological methods or measurement techniques, and so on. It is by speeding up the whole research process that AI can truly accelerate biology. I want to repeat this because it’s the most common misconception that comes up when I talk about AI’s ability to transform biology: I am not talking about AI as merely a tool to analyze data. In line with the definition of powerful AI at the beginning of this essay, I’m talking about using AI to perform, direct, and improve upon nearly everything biologists do.*
 
@@ -28,16 +22,18 @@ As to why Go is a particularly good environment for "automated researcher", it m
 5. I find it deeply profound that simply querying a function approximator for value can be an arbitrarily accurate replacement for simulation. It is a miracle that macroscale effects can be predicted accurately without microscale simulation. Extrapolating this principle, I wonder if long-standing questions of computational hardness (P = NP?) are even the right ones to be asking. Perhaps we should be asking if "P almost NP?"
 6. Self-play, Nash equilibria, mixed strategies, and recursive self-improvement are top-of-mind for frontier labs. Go is a lightweight yet rich environment for studying those dynamics.
 
-The final run to train a competitive policy with a win rate of 77% against the latest stable Katago release `kata1-zhizi-b40c768nbt-fdx6c`.
+Interested in buying RL environments and data for autonomous game-playing RL research? Please [get in touch](https://evjang.com/about/).
+
 
 ## Workflow
 
+Instead of running code yourself, you ask Claude to run your experiments. The human researcher provides interactive feedback, which Claude will use to assist in its interpretation of the data.
+
 There are a few skills in this repository that aid running experiments:
 
-- `autoresearch` : optimization loop
+- `autoresearch` : autonomously optimize a metric. Good for hyperparameter tuning (e.g. minimize validation loss) and performance optimization (e.g. maximize moves/sec).
 - `experiment` : one-off experiment useful for conducting analysis
 
-instead of running code yourself, you ask Claude to run your experiments. The human researcher provides interactive feedback, which Claude will use to assist in its interpretation of the data.
 
 ### Architecture
 
