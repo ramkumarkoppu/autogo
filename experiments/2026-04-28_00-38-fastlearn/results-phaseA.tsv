@@ -1,0 +1,13 @@
+commit	holdout_policy_acc	memory_gb	status	description
+98635b0	0.2615	0.5	keep	baseline 128ch x 10b, lr=1e-3, max_epochs=4, 141s
+60567c1	0.2701	0.5	keep	max_epochs=30, time_budget=600s (full budget used, 18k steps)
+01c9d4c	0.2639	0.5	discard	lr=3e-3 (slight regression vs lr=1e-3)
+a003cf5	0.2657	0.5	keep	sched aligned to time_budget; 5min budget (new fast baseline)
+f379f0f	0.2708	0.8	keep	192ch x 10b (1.5x channels) — modest gain over 128ch
+2eceb03	0.3046	0.8	keep	dataset is_teacher used (vs winner-only) — major gain (+0.034)
+87a8bd3	0.2949	1.2	discard	256ch (2x channels) — regression vs 192ch
+1567cef	0.2714	0.8	discard	WD=1e-3 (lower WD regressed vs 5e-3)
+ebc2212	0.3078	0.8	keep	final Phase A: 192ch + ds_is_teacher + 10min — beats parent iter10 (0.3034)
+06c1dfe	0.3053	0.99	discard	192x12 (deeper) — slower per-step, only 16500 steps; regressed vs 10b
+40f3c40	0.3023	0.7	discard	192x8 (shallower) — regressed; 10 blocks is sweet spot
+a24d196	0.3110	1.7	keep	bs256 (batch 256 vs 128) — slight improvement on Phase A; new best ckpt

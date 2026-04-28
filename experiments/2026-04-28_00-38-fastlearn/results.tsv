@@ -1,0 +1,17 @@
+commit	holdout_policy_acc_it1	status	description
+04ba979	0.3377	keep	baseline: 50 selfplay games + train it1 on (it10 + new) for 10min
+38053ab	0.3051	discard	cleandata: only it7-9 + new (overfit, smaller dataset)
+38053ab	0.2730	discard	onlynew: train it1 only on new selfplay-it0 (overfit, early-stopped at 1200 steps)
+04ba979	0.2986	discard	longertrain (20min vs 10min) — overfit, lower holdout_acc
+1312594	0.3115	discard	lowerlr (lr=3e-4 vs 1e-3) — regressed; default LR is the right size for warm-resume
+fdaa924	0.3389	keep	dirichlet noise enabled — marginal +0.001 over baseline (within noise but kept)
+e3385de	0.3306	discard	strong25 (25 games x 2048 sims, dirichlet on) — fewer games hurts more than stronger MCTS helps
+55a48c5	0.3053	keep	baseline_v2 variance check — same setup as baseline_v1 (0.3377) but 0.32 lower; variance is ~0.03
+8110ef1	0.3343	keep	dirichlet_v2 (2nd sample) — confirms dirichlet ~0.336 vs baseline ~0.322 (small but reproducible)
+c2cc189	0.3216	discard	lowvalweight (0.25x value loss) — hurt vs dirichlet_v2 on same data; value loss is useful aux regularizer
+a6d898e	0.3225	discard	hightemp (T=0.6 + dirichlet) — too much exploration hurts
+77b9094	0.3209	discard	lowtemp (T=0.1 + dirichlet, 42 games due to 95.133 host fail) — neither lower nor higher T helps; T=0.3 sweet spot
+a24d196	0.2956	discard	bs256+dirichlet on bs256 phase A — Phase B regressed; bs256 phaseA gain was likely variance
+40d64a5	0.3239	discard	more100 (100 games x 512 sims, dirichlet) — within noise of baseline; 50x1024 is sweet spot
+682feed	0.3151	discard	highwd (1e-2 vs 5e-3) — below dirichlet mean; default WD is right
+c4cc89f	0.2982	discard	cpuct1.0 (vs 0.5) — regressed; default is right

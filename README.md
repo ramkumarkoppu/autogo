@@ -4,6 +4,8 @@ A minimal codebase for building a strong Go-playing AI from scratch — and, mor
 
 Currently, the best model I have trained has a win rate of 77% against the latest stable Katago release `kata1-zhizi-b40c768nbt-fdx6c`. Play the AutoGo AI at [https://autogo.evjang.com](https://autogo.evjang.com)
 
+![learning progress](progress.png)
+
 
 ## Why Go?
 
@@ -158,7 +160,6 @@ Then inside the container:
 git submodule update --init && uv sync
 claude
 ```
-
 ## Development Setup
 
 VSCode: check Terminal: Send Keybindings To Shell so that you can ctrl-Ee and ctrl-g within Calude repl.
@@ -203,7 +204,7 @@ Installs Docker + the NVIDIA toolkit, logs into GHCR, pulls the image, seeds `/n
 ./infra/cluster.py status   # per-GPU lease state from /nfs/cluster_leases
 ```
 
-### Run an end-to-end iteration
+### Run an end-to-end iteration of Go training
 
 The selfplay-only loop in `experiments/2026-04-26_22-32-train-fromscratch/` dispatches collect jobs across the whole cluster and trains on the gathered data:
 
@@ -211,6 +212,14 @@ The selfplay-only loop in `experiments/2026-04-26_22-32-train-fromscratch/` disp
 EXP=experiments/2026-04-26_22-32-train-fromscratch
 bash $EXP/run_iteration.sh 0 5
 ```
+
+### Auto-Research
+
+You can use the `autoresearch` and `experiment` skills to run new experiments. 
+
+![nn arch tuning](experiments/2026-04-28_00-38-fastlearn/figures/phaseA_progress.png)
+
+![self-play tuning](experiments/2026-04-28_00-38-fastlearn/figures/phaseB_progress.png)
 
 ## Infra & Research Advice
 

@@ -1,0 +1,11 @@
+# phaseB-cleandata: only most-recent parent iters + new selfplay-it0
+experiments/2026-04-27_16-31-train-fromscratch-champion/as-black-it7
+experiments/2026-04-27_16-31-train-fromscratch-champion/as-white-it7
+experiments/2026-04-27_16-31-train-fromscratch-champion/selfplay-it7
+experiments/2026-04-27_16-31-train-fromscratch-champion/as-black-it8
+experiments/2026-04-27_16-31-train-fromscratch-champion/as-white-it8
+experiments/2026-04-27_16-31-train-fromscratch-champion/selfplay-it8
+experiments/2026-04-27_16-31-train-fromscratch-champion/as-black-it9
+experiments/2026-04-27_16-31-train-fromscratch-champion/as-white-it9
+experiments/2026-04-27_16-31-train-fromscratch-champion/selfplay-it9
+experiments/2026-04-28_00-38-fastlearn/selfplay-it0

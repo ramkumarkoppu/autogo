@@ -1,0 +1,6 @@
+# job_priorities.txt — higher number = run first (primary); FIFO within ties.
+# Edit any line's priority; changes take effect at the next job claim.
+0	py-mcts
+0	cpp-mcts-seq
+0	cpp-batched
+0	cpp-batched-leaf
