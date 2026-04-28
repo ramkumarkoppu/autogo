@@ -6,7 +6,7 @@ Currently, the best model I have trained has a win rate of 77% against the lates
 
 ![learning progress](progress.png)
 
-[Web Tutorail](https://evjang.com/2026/04/28/autogo.html)
+[Web Tutorial](https://evjang.com/2026/04/28/autogo.html)
 
 [Play the AutoGo AI](https://autogo.evjang.com)
 
