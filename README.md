@@ -24,7 +24,7 @@ As to why Go is a particularly good environment for "automated researcher", it m
 5. I find it deeply profound that simply querying a function approximator for value can be an arbitrarily accurate replacement for simulation. It is a miracle that macroscale effects can be predicted accurately without microscale simulation. Extrapolating this principle, I wonder if long-standing questions of computational hardness (P = NP?) are even the right ones to be asking. Perhaps we should be asking if "P almost NP?"
 6. Self-play, Nash equilibria, mixed strategies, and recursive self-improvement are top-of-mind for frontier labs. Go is a lightweight yet rich environment for studying those dynamics.
 
-Interested in buying RL environments and data for autonomous game-playing RL research? Please [get in touch](https://evjang.com/about/).
+Interested in buying RL environments and data for autonomous game-playing RL research? Please [get in touch](https://forms.gle/GqwLJ9r3SMVcygB46).
 
 
 ## Workflow
