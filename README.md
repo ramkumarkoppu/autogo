@@ -2,10 +2,13 @@
 
 A minimal codebase for building a strong Go-playing AI from scratch — and, more importantly, for studying how to automate the AI researcher driving the project. AutoGo is less about mastering Go than about exercising an autonomous-research workflow on a domain where data is cheap and signal is fast.
 
-Currently, the best model I have trained has a win rate of 77% against the latest stable Katago release `kata1-zhizi-b40c768nbt-fdx6c`. Play the AutoGo AI at [https://autogo.evjang.com](https://autogo.evjang.com)
+Currently, the best model I have trained has a win rate of 77% against the latest stable Katago release `kata1-zhizi-b40c768nbt-fdx6c`. 
 
 ![learning progress](progress.png)
 
+[Web Tutorail](https://evjang.com/2026/04/28/autogo.html)
+
+[Play the AutoGo AI](https://autogo.evjang.com)
 
 ## Why Go?
 
@@ -221,10 +224,11 @@ You can use the `autoresearch` and `experiment` skills to run new experiments.
 
 ![self-play tuning](experiments/2026-04-28_00-38-fastlearn/figures/phaseB_progress.png)
 
-## Infra & Research Advice
+## Infra Advice
 
 - Having Claude "run the training loop by hand" and stop and remark when a given iteration was going unstable was very useful for catching unstable training early. 
 - It's very helpful to start with alternating synchronously between train and collect jobs before attempting to max throughput with async RL and simultaneous training + data collect. Helps a lot with catching stability issues in training, which are much harder to diagnose / backtrack in async mode. Once you get synchronous baseline working, then you can look into speeding things up with async.
+- I wasted a lot of time wrangling distributed job orchestration frameworks. Falling back to docker exec calls over SSH ended up working best and being agent-friendly.
 
 
 ## Acknowledgements
