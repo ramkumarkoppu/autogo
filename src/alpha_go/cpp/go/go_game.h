@@ -35,7 +35,7 @@ public:
     bool is_legal_flat(int index) const;
     std::vector<int> get_legal_moves_flat() const;  // Returns flat indices
     bool is_game_over() const { return passes_ >= 2; }
-    float score() const;              // Chinese rules, returns black - white (with komi)
+    float score() const;              // Tromp-Taylor area scoring, returns black - white (with komi)
     int8_t get_winner() const;        // BLACK, WHITE, or 0 for draw
 
     // State access
@@ -67,9 +67,6 @@ private:
 
     // Remove all stones in a group
     int remove_group(const std::vector<int>& group);
-
-    // Check if placing at index would be suicide
-    bool would_be_suicide(int index) const;
 
     int size_;
     float komi_;

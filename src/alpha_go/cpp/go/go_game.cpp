@@ -88,66 +88,27 @@ int GoBoard::remove_group(const std::vector<int>& group) {
     return static_cast<int>(group.size());
 }
 
-bool GoBoard::would_be_suicide(int index) const {
-    int8_t color = to_play_;
-    int8_t opponent = (color == BLACK) ? WHITE : BLACK;
-
-    // Temporarily place the stone
-    auto& mutable_board = const_cast<std::vector<int8_t>&>(board_);
-    mutable_board[index] = color;
-
-    // Check if our stone has liberties
-    auto [group, liberties] = get_group_and_liberties(index);
-
-    if (!liberties.empty()) {
-        // Has liberties - not suicide
-        mutable_board[index] = EMPTY;
-        return false;
-    }
-
-    // No direct liberties - check if we capture any opponent stones
-    for (int i = 0; i < neighbor_counts_[index]; ++i) {
-        int neighbor = neighbor_indices_[index][i];
-        if (mutable_board[neighbor] == opponent) {
-            auto [opp_group, opp_liberties] = get_group_and_liberties(neighbor);
-            if (opp_liberties.empty()) {
-                // Would capture opponent - not suicide
-                mutable_board[index] = EMPTY;
-                return false;
-            }
-        }
-    }
-
-    // No liberties and no captures - suicide
-    mutable_board[index] = EMPTY;
-    return true;
-}
-
 bool GoBoard::is_legal(int row, int col) const {
     return is_legal_flat(flat_index(row, col));
 }
 
 bool GoBoard::is_legal_flat(int index) const {
-    // Check bounds
+    // Tromp-Taylor legality: any empty point is playable except for the simple
+    // ko point. Self-capture (suicide) is *legal* under TT — play_flat removes
+    // the suiciding group when the placed stone's chain ends with no liberties.
+    // Note: full positional superko is not enforced here; we keep the simple
+    // single-stone ko rule as a fast approximation. KataGo's POSITIONAL ko is
+    // strictly more restrictive, so it never plays a move that violates our
+    // simple ko, which keeps the two sides agreeing in practice.
     if (index < 0 || index >= size_ * size_) {
         return false;
     }
-
-    // Must be empty
     if (board_[index] != EMPTY) {
         return false;
     }
-
-    // Cannot play on ko point
     if (ko_point_.has_value() && ko_point_.value() == index) {
         return false;
     }
-
-    // Cannot commit suicide
-    if (would_be_suicide(index)) {
-        return false;
-    }
-
     return true;
 }
 
@@ -198,12 +159,17 @@ bool GoBoard::play_flat(int index) {
         }
     }
 
-    // Set ko point if exactly one stone was captured and our stone has exactly one liberty
-    if (total_captured == 1) {
-        auto [our_group, our_liberties] = get_group_and_liberties(index);
-        if (our_liberties.size() == 1 && our_group.size() == 1) {
-            ko_point_ = last_captured_idx;
-        }
+    // TT self-capture: after opponent groups are removed, if our own group is
+    // left with no liberties, remove it. This is what makes a "suicide" legal
+    // under Tromp-Taylor — the suiciding chain just disappears. The classic
+    // single-stone ko rule still applies on the more common path where the
+    // move captured exactly one opponent stone and our placement is itself a
+    // singleton with one liberty.
+    auto [our_group, our_liberties] = get_group_and_liberties(index);
+    if (our_liberties.empty()) {
+        remove_group(our_group);
+    } else if (total_captured == 1 && our_group.size() == 1 && our_liberties.size() == 1) {
+        ko_point_ = last_captured_idx;
     }
 
     // Reset passes
@@ -225,7 +191,8 @@ bool GoBoard::pass() {
 }
 
 float GoBoard::score() const {
-    // Chinese rules: area scoring
+    // Tromp-Taylor area scoring: all stones counted as alive, empty regions
+    // awarded to a color iff they touch only that color.
     float black_score = 0.0f;
     float white_score = komi_;
 

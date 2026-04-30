@@ -101,20 +101,22 @@ TEST_CASE("Ko rule", "[go_game]") {
     REQUIRE_FALSE(board.is_legal(1, 2));
 }
 
-TEST_CASE("Suicide prevention", "[go_game]") {
+TEST_CASE("Suicide is legal under Tromp-Taylor (self-capture)", "[go_game]") {
     GoBoard board(9);
 
-    // Set up: Black surrounds position (0,0) except one liberty
-    //   0 1
-    // 0 . B
-    // 1 B .
-
+    // Black surrounds (0,0). White's neighbors at (0,1) and (1,0) both have
+    // outside liberties, so playing white at (0,0) doesn't capture them — it
+    // just leaves the placed white stone with zero liberties. Under TT that's
+    // a legal "suicide": the white stone is removed, the corner stays empty.
     board.play(0, 1);  // Black
     board.play(8, 8);  // White elsewhere
     board.play(1, 0);  // Black
 
-    // White cannot play at (0,0) - would be suicide
-    REQUIRE_FALSE(board.is_legal(0, 0));
+    REQUIRE(board.is_legal(0, 0));
+    REQUIRE(board.play(0, 0));      // White self-captures
+    REQUIRE(board.at(0, 0) == GoBoard::EMPTY);
+    REQUIRE(board.at(0, 1) == GoBoard::BLACK);
+    REQUIRE(board.at(1, 0) == GoBoard::BLACK);
 }
 
 TEST_CASE("Capture is not suicide", "[go_game]") {
