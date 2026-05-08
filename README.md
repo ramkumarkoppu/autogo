@@ -2,9 +2,11 @@
 
 A minimal codebase for building a strong Go-playing AI from scratch — and, more importantly, for studying how to automate the AI researcher driving the project. AutoGo is less about mastering Go than about exercising an autonomous-research workflow on a domain where data is cheap and signal is fast.
 
-Currently, the best model I have trained has a win rate of 77% against the latest stable Katago release `kata1-zhizi-b40c768nbt-fdx6c`. 
+Currently, the best model I have trained plays OK but has some bugs due to not understanding life/death properly due to being trained on Tromp-Taylor scoring rules. Working on fixing this.
 
-![learning progress](progress.png)
+ <!-- that I'm working on fixing `kata1-zhizi-b40c768nbt-fdx6c`.  -->
+
+<!-- ![learning progress](progress.png) -->
 
 [Web Tutorial](https://evjang.com/2026/04/28/autogo.html)
 
