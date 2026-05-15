@@ -527,8 +527,9 @@ def main() -> None:
     parser.add_argument(
         "--max-moves",
         type=int,
-        default=150,
-        help="Max number of moves played before final area score is calculated"
+        default=None,
+        help="Max number of moves played before final area score is calculated. "
+             "Defaults to board_size * board_size * 2."
     )
     parser.add_argument(
         "--seed",
@@ -603,6 +604,13 @@ def main() -> None:
         help="Tag white-side MoveMetrics with is_teacher=True (saved in NPZ)",
     )
     args = parser.parse_args()
+
+    # Default max_moves scales with board size: a Go game's natural ceiling is
+    # ~2 * board_size**2 moves (every point played twice — once placed, once
+    # recaptured). Avoids hardcoded constants like 300 that cap 19x19 games
+    # below the natural game length.
+    if args.max_moves is None:
+        args.max_moves = args.board_size * args.board_size * 2
 
     # Local execution mode
     if args.seed is not None:

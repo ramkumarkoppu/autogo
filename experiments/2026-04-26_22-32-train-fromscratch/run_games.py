@@ -13,7 +13,7 @@ from alpha_go.agents.nn_mcts import CppMCTSAgent, LeafBatchedNNEvaluator
 NUM_SIMULATIONS = 1024
 PCR_NUM_SIM = [1024, 2048]
 PCR_PROB = [0.95, 0.05]
-C_PUCT = 0.5
+C_PUCT = 5.0
 TEMPERATURE = 0.3
 RESIGN_THRESHOLD = 0.05
 RESIGN_CONSEC_TURNS = 5

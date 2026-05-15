@@ -98,7 +98,7 @@ BOARD_SIZE = 19
 MODEL_CONFIG = "18M"  # ignored when checkpoint is SizeInvariantGoResNet
 DEFAULT_CKPT = "/nfs/checkpoints/2026-04-22_12-11-learngo-19x19-9x9-v0/iter12_best.pt"
 NUM_SIMULATIONS = 1024
-C_PUCT = 0.5
+C_PUCT = 5.0
 TEMPERATURE = 0.3
 
 
