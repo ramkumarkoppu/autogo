@@ -8,6 +8,7 @@ from alpha_go.go import FastGoBoard, GoState, BLACK, WHITE, EMPTY
 from alpha_go.agents import random as _random  # noqa: F401
 from alpha_go.agents import nn_agent as _nn_agent  # noqa: F401
 from alpha_go.agents import autogo as _autogo  # noqa: F401
+from alpha_go.agents import claude_agent as _claude_agent  # noqa: F401
 
 __all__ = [
     "Agent",

@@ -23,6 +23,11 @@ game_human_color: dict[str, int] = {}
 game_agents: dict[str, "Agent"] = {}
 game_agent_names: dict[str, str] = {}  # Store agent name for recreation on undo
 
+# AI-vs-AI mode: black agent is in game_agents, white agent here.
+# human_color is set to 0 (neither BLACK=1 nor WHITE=2) to disable human moves.
+game_white_agents: dict[str, "Agent"] = {}
+game_white_agent_names: dict[str, str] = {}
+
 # Import agents (must be after GTPEngine is defined)
 from alpha_go.agents import Agent, get_agent, list_agents  # noqa: E402
 
@@ -256,6 +261,87 @@ async def undo_move(game_id: str) -> GameState:
             agent.notify_move(move[0], move[1])
 
     return engine_to_state(game_id, engine, "Undid last 2 moves")
+
+
+# === AI vs AI spectator mode =================================================
+
+@app.post("/api/new_ai_game")
+async def new_ai_game(
+    size: int = 9, black: str = "claude-opus-xhigh", white: str = "autogo"
+) -> GameState:
+    """Create a game where both colors are AI agents. Use /api/game/{id}/ai_step
+    to advance one move at a time."""
+    if size not in (9, 13, 19):
+        raise HTTPException(status_code=400, detail="Size must be 9, 13, or 19")
+    try:
+        black_agent = get_agent(black)
+        white_agent = get_agent(white)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+    game_id = str(uuid.uuid4())[:8]
+    engine = GTPEngine.new(size=size, level=1)
+    games[game_id] = engine
+    game_agents[game_id] = black_agent
+    game_agent_names[game_id] = black
+    game_white_agents[game_id] = white_agent
+    game_white_agent_names[game_id] = white
+    game_human_color[game_id] = 0  # 0 = no human side
+
+    black_agent.start_game(size)
+    white_agent.start_game(size)
+
+    msg = f"{black} (Black) vs {white} (White). Press Step or Auto."
+    return engine_to_state(game_id, engine, msg)
+
+
+@app.post("/api/game/{game_id}/ai_step")
+async def ai_step(game_id: str) -> GameState:
+    """Advance the AI-vs-AI game by one move (whichever color is to play)."""
+    if game_id not in games:
+        raise HTTPException(status_code=404, detail="Game not found")
+    if game_human_color.get(game_id) != 0:
+        raise HTTPException(status_code=400, detail="Not an AI-vs-AI game")
+
+    engine = games[game_id]
+    if engine.is_over():
+        return engine_to_state(game_id, engine, f"Game over: {engine.result()}")
+
+    to_play = engine.to_play
+    if to_play == BLACK:
+        agent = game_agents[game_id]
+        name = game_agent_names[game_id]
+        other = game_white_agents[game_id]
+    else:
+        agent = game_white_agents[game_id]
+        name = game_white_agent_names[game_id]
+        other = game_agents[game_id]
+
+    cpp_board = _engine_to_cpp_board(engine)
+    move = agent.select_move(cpp_board, seed=engine.move_count if hasattr(engine, "move_count") else 0)
+
+    color_label = "Black" if to_play == BLACK else "White"
+    if move is None or move == (-1, -1):
+        engine.play(None, None)
+        agent.notify_move(-1, -1)
+        other.notify_move(-1, -1)
+        msg = f"{name} ({color_label}) passed."
+    else:
+        engine.play(move[0], move[1])
+        agent.notify_move(move[0], move[1])
+        other.notify_move(move[0], move[1])
+        msg = f"{name} ({color_label}) played {COLS[move[1]]}{engine.size - move[0]}."
+
+    if engine.is_over():
+        msg += f" Game over! {engine.result()}"
+
+    return engine_to_state(game_id, engine, msg)
+
+
+@app.get("/vs", response_class=HTMLResponse)
+async def vs_page() -> str:
+    """Spectator page for AI-vs-AI matches."""
+    return VS_HTML_PAGE
 
 
 @app.get("/api/game/{game_id}/assist")
@@ -957,7 +1043,7 @@ HTML_PAGE = """
             const agents = await response.json();
             const select = document.getElementById('agent');
             select.innerHTML = agents.map(a =>
-                `<option value="${a}"${a === 'gnugo1' ? ' selected' : ''}>${a}</option>`
+                `<option value="${a}"${a === 'autogo' ? ' selected' : ''}>${a}</option>`
             ).join('');
         }
 
@@ -1177,6 +1263,239 @@ HTML_PAGE = """
             if (e.key === 'PageUp' || e.key === '[') prevGame();
             if (e.key === 'PageDown' || e.key === ']') nextGame();
         });
+    </script>
+</body>
+</html>
+"""
+
+
+VS_HTML_PAGE = """
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AutoGo - AI vs AI</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+               max-width: 900px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+        h1 { text-align: center; color: #333; }
+        .controls { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+                    margin-bottom: 15px; }
+        select, button { padding: 10px 18px; font-size: 15px; border: none;
+                         border-radius: 5px; cursor: pointer; }
+        button { background: #4CAF50; color: white; }
+        button:hover { background: #45a049; }
+        button:disabled { background: #aaa; cursor: not-allowed; }
+        button.stop { background: #f44336; }
+        button.stop:hover { background: #d32f2f; }
+        button.step { background: #2196F3; }
+        button.step:hover { background: #1976D2; }
+        select { background: white; border: 1px solid #ddd; }
+        .status { text-align: center; padding: 12px; margin: 10px 0; background: white;
+                  border-radius: 5px; font-size: 16px; font-weight: 500; }
+        .message { text-align: center; color: #555; margin: 8px 0; min-height: 20px; }
+        .board-container { display: flex; justify-content: center; margin: 15px 0; }
+        .board { background: #DEB887; padding: 18px; border-radius: 5px;
+                 box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        .board-grid { display: grid; gap: 0; }
+        .cell { width: 34px; height: 34px; position: relative; }
+        .cell::before { content: ''; position: absolute; left: 50%; top: 0; bottom: 0;
+                        width: 1px; background: #8B4513; }
+        .cell::after { content: ''; position: absolute; top: 50%; left: 0; right: 0;
+                       height: 1px; background: #8B4513; }
+        .cell.top::before { top: 50%; }
+        .cell.bottom::before { bottom: 50%; }
+        .cell.left::after { left: 50%; }
+        .cell.right::after { right: 50%; }
+        .stone { position: absolute; width: 30px; height: 30px; border-radius: 50%;
+                 top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 10; }
+        .stone.black { background: radial-gradient(circle at 30% 30%, #555, #000);
+                       box-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .stone.white { background: radial-gradient(circle at 30% 30%, #fff, #ccc);
+                       box-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .stone.last-move::after { content: ''; position: absolute; width: 9px; height: 9px;
+                                   border-radius: 50%; background: #ff4444; top: 50%; left: 50%;
+                                   transform: translate(-50%, -50%); }
+        .star-point { position: absolute; width: 7px; height: 7px; background: #8B4513;
+                      border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                      z-index: 1; }
+        .coords { display: flex; justify-content: center; gap: 0; margin-left: 18px; }
+        .coord-label { width: 34px; text-align: center; font-weight: bold; color: #666; }
+        .row-labels { display: flex; flex-direction: column; justify-content: center;
+                      margin-right: 4px; }
+        .row-label { height: 34px; display: flex; align-items: center; justify-content: center;
+                     font-weight: bold; color: #666; width: 20px; }
+        .info { background: white; padding: 10px; border-radius: 5px; margin-top: 10px;
+                font-size: 13px; color: #666; text-align: center; }
+        .info a { color: #2196F3; }
+    </style>
+</head>
+<body>
+    <h1>AutoGo: AI vs AI</h1>
+
+    <div class="controls">
+        <label>Size: <select id="size"><option value="9" selected>9x9</option><option value="13">13x13</option><option value="19">19x19</option></select></label>
+        <label>Black: <select id="blackAgent"></select></label>
+        <label>White: <select id="whiteAgent"></select></label>
+        <button onclick="newAIGame()">New Game</button>
+    </div>
+    <div class="controls">
+        <button class="step" id="stepBtn" onclick="stepOnce()" disabled>Step</button>
+        <button id="autoBtn" onclick="toggleAuto()" disabled>▶ Auto</button>
+        <button class="stop" id="stopBtn" onclick="stopAuto()" disabled style="display:none">⏸ Pause</button>
+        <label>Delay: <select id="delay"><option value="500">0.5s</option><option value="1500" selected>1.5s</option><option value="3000">3s</option><option value="0">none</option></select></label>
+    </div>
+
+    <div id="status" class="status">Pick agents and click <b>New Game</b>.</div>
+    <div id="message" class="message"></div>
+
+    <div class="board-container">
+        <div class="row-labels" id="row-labels"></div>
+        <div>
+            <div class="coords" id="col-labels"></div>
+            <div class="board"><div class="board-grid" id="board"></div></div>
+        </div>
+    </div>
+
+    <div class="info">Spectator view — board is not clickable. For human-vs-AI, go to <a href="/">/</a>.</div>
+
+    <script>
+        const COLS = 'ABCDEFGHJKLMNOPQRST';
+        let gameId = null, gameState = null, autoTimer = null, stepping = false;
+
+        function getStars(size) {
+            if (size === 9) return [[2,2],[2,6],[4,4],[6,2],[6,6]];
+            if (size === 13) return [[3,3],[3,9],[6,6],[9,3],[9,9]];
+            return [[3,3],[3,9],[3,15],[9,3],[9,9],[9,15],[15,3],[15,9],[15,15]];
+        }
+
+        function renderBoard(state) {
+            const board = document.getElementById('board');
+            const colLabels = document.getElementById('col-labels');
+            const rowLabels = document.getElementById('row-labels');
+            const size = state.size;
+            board.style.gridTemplateColumns = `repeat(${size}, 34px)`;
+            board.innerHTML = ''; colLabels.innerHTML = ''; rowLabels.innerHTML = '';
+            for (let c = 0; c < size; c++) {
+                const el = document.createElement('div'); el.className = 'coord-label';
+                el.textContent = COLS[c]; colLabels.appendChild(el);
+            }
+            for (let r = 0; r < size; r++) {
+                const el = document.createElement('div'); el.className = 'row-label';
+                el.textContent = size - r; rowLabels.appendChild(el);
+            }
+            const stars = getStars(size);
+            for (let r = 0; r < size; r++) {
+                for (let c = 0; c < size; c++) {
+                    const cell = document.createElement('div'); cell.className = 'cell';
+                    if (r === 0) cell.classList.add('top');
+                    if (r === size - 1) cell.classList.add('bottom');
+                    if (c === 0) cell.classList.add('left');
+                    if (c === size - 1) cell.classList.add('right');
+                    if (stars.some(([sr, sc]) => sr === r && sc === c)) {
+                        const star = document.createElement('div'); star.className = 'star-point';
+                        cell.appendChild(star);
+                    }
+                    const v = state.board[r][c];
+                    if (v !== 0) {
+                        const s = document.createElement('div');
+                        s.className = 'stone ' + (v === 1 ? 'black' : 'white');
+                        if (state.last_move && state.last_move[0] === r && state.last_move[1] === c) {
+                            s.classList.add('last-move');
+                        }
+                        cell.appendChild(s);
+                    }
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        function updateStatus(state) {
+            const status = document.getElementById('status');
+            const message = document.getElementById('message');
+            if (state.is_over) {
+                status.textContent = `Game Over: ${state.result}`;
+                stopAuto();
+                document.getElementById('stepBtn').disabled = true;
+                document.getElementById('autoBtn').disabled = true;
+            } else {
+                const toPlay = state.to_play === 1 ? 'Black' : 'White';
+                const agent = state.to_play === 1
+                    ? document.getElementById('blackAgent').value
+                    : document.getElementById('whiteAgent').value;
+                status.textContent = stepping
+                    ? `${agent} (${toPlay}) is thinking...`
+                    : `Next move: ${agent} (${toPlay})`;
+            }
+            message.textContent = state.message || '';
+        }
+
+        async function loadAgents() {
+            const r = await fetch('/api/agents');
+            const agents = await r.json();
+            const black = document.getElementById('blackAgent');
+            const white = document.getElementById('whiteAgent');
+            const opts = agents.map(a => `<option value="${a}">${a}</option>`).join('');
+            black.innerHTML = opts; white.innerHTML = opts;
+            if (agents.includes('claude-opus-xhigh')) black.value = 'claude-opus-xhigh';
+            if (agents.includes('autogo')) white.value = 'autogo';
+        }
+
+        async function newAIGame() {
+            stopAuto();
+            const size = document.getElementById('size').value;
+            const black = document.getElementById('blackAgent').value;
+            const white = document.getElementById('whiteAgent').value;
+            const r = await fetch(`/api/new_ai_game?size=${size}&black=${black}&white=${white}`,
+                                  { method: 'POST' });
+            if (!r.ok) {
+                const err = await r.text();
+                document.getElementById('status').textContent = 'Failed to create game: ' + err;
+                return;
+            }
+            gameState = await r.json();
+            gameId = gameState.game_id;
+            document.getElementById('stepBtn').disabled = false;
+            document.getElementById('autoBtn').disabled = false;
+            renderBoard(gameState); updateStatus(gameState);
+        }
+
+        async function stepOnce() {
+            if (!gameId || stepping || gameState.is_over) return;
+            stepping = true;
+            updateStatus(gameState);
+            try {
+                const r = await fetch(`/api/game/${gameId}/ai_step`, { method: 'POST' });
+                gameState = await r.json();
+                renderBoard(gameState);
+            } finally {
+                stepping = false;
+                updateStatus(gameState);
+            }
+        }
+
+        async function autoLoop() {
+            await stepOnce();
+            if (gameState && gameState.is_over) { stopAuto(); return; }
+            if (autoTimer === null) return; // stopped during step
+            const delay = parseInt(document.getElementById('delay').value, 10);
+            autoTimer = setTimeout(autoLoop, delay);
+        }
+
+        function toggleAuto() {
+            if (autoTimer !== null) { stopAuto(); return; }
+            document.getElementById('autoBtn').style.display = 'none';
+            document.getElementById('stopBtn').style.display = '';
+            document.getElementById('stopBtn').disabled = false;
+            autoTimer = setTimeout(autoLoop, 0);
+        }
+
+        function stopAuto() {
+            if (autoTimer !== null) { clearTimeout(autoTimer); autoTimer = null; }
+            document.getElementById('autoBtn').style.display = '';
+            document.getElementById('stopBtn').style.display = 'none';
+        }
+
+        window.onload = async () => { await loadAgents(); };
     </script>
 </body>
 </html>
