@@ -1,0 +1,11 @@
+* text=auto
+
+# Shell scripts must use LF endings on all platforms — Linux/macOS won't
+# execute them with CRLF (and bash misparses control flow with \r in lines).
+*.sh text eol=lf
+
+# Model checkpoints are binary
+*.pt binary
+*.pth binary
+*.safetensors binary
+*.npz binary

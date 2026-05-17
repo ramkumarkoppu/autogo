@@ -38,3 +38,6 @@ htmlcov/
 
 # Secrets
 .secrets
+
+# Local editor/tool settings (not project state)
+.claude/settings.local.json
